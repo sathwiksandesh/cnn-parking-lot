@@ -154,7 +154,7 @@ def predict_validation_frames(model, validation):
 
         records.append({
             "date": str(row.date_group),
-            "camera": str(row.camera),
+            "camera": str(row.camera_num),
             "datetime": str(row.datetime_parsed),
             "slot_id": str(row.slot_id),
             "true_label": int(row.occupancy),

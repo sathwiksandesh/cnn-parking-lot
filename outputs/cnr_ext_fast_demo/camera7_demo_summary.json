@@ -1,0 +1,14 @@
+{
+  "dataset": "CNR-EXT",
+  "date": "2015-11-12",
+  "camera": "camera7",
+  "video_type": "Video assembled from sampled dataset frames",
+  "threshold": 0.3,
+  "output_fps": 5,
+  "frames_written": 21,
+  "slot_predictions": 966,
+  "correct_predictions": 926,
+  "demo_slot_accuracy": 0.9586,
+  "video_path": "outputs\\cnr_ext_fast_demo\\cnr_ext_camera7_demo.mp4",
+  "predictions_csv": "outputs\\cnr_ext_fast_demo\\camera7_demo_predictions.csv"
+}

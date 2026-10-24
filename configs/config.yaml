@@ -3,7 +3,6 @@ project:
   name: "CNN Parking Lot Occupancy Detector"
   version: "1.0.0"
   random_seed: 42
-
 data:
   image_width: 96
   image_height: 96
@@ -17,13 +16,13 @@ model:
   architecture: "custom_cnn"
   epochs: 3
   learning_rate: 0.001
-  threshold: 0.50
+  threshold: 0.30 
 
 paths:
   raw_data: "dataset/raw"
   processed_data: "dataset/processed"
   splits: "dataset/splits"
-  model: "models/parking_cnn.keras"
+  model: "models/cnr_ext_cnn_fast.keras"
   plots: "outputs/plots"
   reports: "outputs/reports"
 

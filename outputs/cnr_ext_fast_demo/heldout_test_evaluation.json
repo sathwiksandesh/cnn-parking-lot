@@ -1,0 +1,71 @@
+{
+  "evaluation_type": "held-out full-frame test",
+  "model": "models\\cnr_ext_cnn_fast.keras",
+  "test_dates": [
+    "2015-12-03",
+    "2015-12-10",
+    "2016-01-09"
+  ],
+  "threshold_frozen_from_validation": 0.3,
+  "number_of_slots_evaluated": 18615,
+  "number_of_unique_frames": 523,
+  "accuracy": 0.9477303250067151,
+  "confusion_matrix_rows_true_columns_predicted": [
+    [
+      8137,
+      808
+    ],
+    [
+      165,
+      9505
+    ]
+  ],
+  "label_mapping": {
+    "0": "free",
+    "1": "occupied"
+  },
+  "free_class": {
+    "precision": 0.9801252710190316,
+    "recall": 0.9096702068194522,
+    "f1": 0.9435843914883748,
+    "support": 8945
+  },
+  "occupied_class": {
+    "precision": 0.9216522835256472,
+    "recall": 0.9829369183040331,
+    "f1": 0.9513086123204724,
+    "support": 9670
+  },
+  "errors": {
+    "free_predicted_occupied": 808,
+    "occupied_predicted_free": 165
+  },
+  "classification_report": {
+    "free": {
+      "precision": 0.9801252710190316,
+      "recall": 0.9096702068194522,
+      "f1-score": 0.9435843914883748,
+      "support": 8945.0
+    },
+    "occupied": {
+      "precision": 0.9216522835256472,
+      "recall": 0.9829369183040331,
+      "f1-score": 0.9513086123204724,
+      "support": 9670.0
+    },
+    "accuracy": 0.9477303250067151,
+    "macro avg": {
+      "precision": 0.9508887772723393,
+      "recall": 0.9463035625617426,
+      "f1-score": 0.9474465019044236,
+      "support": 18615.0
+    },
+    "weighted avg": {
+      "precision": 0.9497501010452992,
+      "recall": 0.9477303250067151,
+      "f1-score": 0.9475969198497171,
+      "support": 18615.0
+    }
+  },
+  "note": "Threshold was selected on validation data and frozen before held-out test evaluation. No threshold tuning was performed here."
+}
