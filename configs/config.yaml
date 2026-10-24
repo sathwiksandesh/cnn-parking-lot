@@ -1,0 +1,33 @@
+
+project:
+  name: "CNN Parking Lot Occupancy Detector"
+  version: "1.0.0"
+  random_seed: 42
+
+data:
+  image_width: 128
+  image_height: 128
+  channels: 3
+  train_ratio: 0.70
+  validation_ratio: 0.15
+  test_ratio: 0.15
+  batch_size: 32
+
+model:
+  architecture: "custom_cnn"
+  epochs: 30
+  learning_rate: 0.001
+  threshold: 0.5
+
+paths:
+  raw_data: "dataset/raw"
+  processed_data: "dataset/processed"
+  splits: "dataset/splits"
+  model: "models/parking_cnn.keras"
+  plots: "outputs/plots"
+  reports: "outputs/reports"
+
+detection:
+  input_source: "video"
+  stable_frames: 3
+  draw_confidence: true

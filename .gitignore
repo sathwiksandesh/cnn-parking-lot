@@ -1,0 +1,42 @@
+
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.vscode/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+dataset/raw/
+dataset/processed/
+dataset/splits/train/
+dataset/splits/val/
+dataset/splits/test/
+
+# Downloaded or generated CNRPark-EXT data.
+dataset/cnrpark_ext/full_images/FULL_IMAGE_1000x750/
+dataset/cnrpark_ext/full_images/*.tar
+dataset/cnrpark_ext/patches/extracted/
+dataset/cnrpark_ext/patches/*.zip
+dataset/cnrpark_ext/crops_96/
+dataset/cnrpark_ext/metadata/CNRPark+EXT.csv
+dataset/cnrpark_ext/metadata/cnr_ext_frame_manifest.csv
+
+# Trained model weights and checkpoints.
+models/*.keras
+models/*.h5
+models/*.hdf5
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.ckpt
+models/checkpoints/
+
+# Generated visualizations, reports, debug crops, and videos.
+outputs/plots/
+outputs/reports/
+outputs/processed_videos/
+outputs/debug_crops/
+outputs/cnrpark_demo/
