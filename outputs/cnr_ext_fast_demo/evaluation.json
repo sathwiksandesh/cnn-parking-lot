@@ -1,0 +1,27 @@
+{
+  "test_dates": [
+    "2015-12-03",
+    "2015-12-10",
+    "2016-01-09"
+  ],
+  "number_of_slots": 960,
+  "accuracy": 0.9697916666666667,
+  "confusion_matrix_rows_true_columns_predicted": [
+    [
+      881,
+      18
+    ],
+    [
+      11,
+      50
+    ]
+  ],
+  "label_mapping": {
+    "0": "free",
+    "1": "busy"
+  },
+  "interpretation": {
+    "free_predicted_busy": 18,
+    "busy_predicted_free": 11
+  }
+}

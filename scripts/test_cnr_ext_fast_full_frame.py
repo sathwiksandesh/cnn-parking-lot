@@ -68,14 +68,14 @@ def main():
         raise FileNotFoundError(f"Model not found: {MODEL_PATH}")
 
     manifest = pd.read_csv(MANIFEST_PATH)
-    manifest["datetime"] = pd.to_datetime(manifest["datetime"])
+    manifest["datetime"] = pd.to_datetime(manifest["datetime_parsed"])
     manifest["date"] = manifest["datetime"].dt.strftime("%Y-%m-%d")
 
     # One held-out frame per date and camera, where available.
     selected = (
         manifest[manifest["date"].isin(TEST_DATES)]
         .sort_values("datetime")
-        .groupby(["date", "camera"], as_index=False)
+        .groupby(["date", "camera_num"], as_index=False)
         .first()
     )
 
@@ -84,7 +84,7 @@ def main():
     all_results = []
 
     for _, frame_row in selected.iterrows():
-        camera = int(frame_row["camera"])
+        camera = int(frame_row["camera_num"])
         timestamp = frame_row["datetime"]
         frame_path = Path(frame_row["frame_path"])
 
@@ -102,7 +102,7 @@ def main():
         # Use the manifest's annotations for this exact frame.
         frame_rows = manifest[
             (manifest["date"] == frame_row["date"])
-            & (manifest["camera"] == camera)
+            & (manifest["camera_num"] == camera)
             & (manifest["datetime"] == timestamp)
         ]
 
