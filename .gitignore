@@ -26,13 +26,9 @@ dataset/cnrpark_ext/metadata/cnr_ext_frame_manifest.csv
 
 # Trained model weights and checkpoints.
 models/*.keras
+!models/cnr_ext_cnn_fast.keras
 models/*.h5
 models/*.hdf5
-models/*.pt
-models/*.pth
-models/*.onnx
-models/*.ckpt
-models/checkpoints/
 
 # Generated visualizations, reports, debug crops, and videos.
 outputs/plots/
