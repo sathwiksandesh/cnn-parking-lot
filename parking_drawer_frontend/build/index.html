@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Parking Space Drawer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0e1117;
+      color: #fafafa;
+      user-select: none;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      background: #1a1d24;
+      border-bottom: 1px solid #2d3140;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #00c853;
+      margin-right: 4px;
+    }
+
+    button {
+      padding: 5px 13px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .btn-undo {
+      background: #37393f;
+      color: #e0e0e0;
+    }
+    .btn-undo:hover { background: #4a4d55; }
+
+    .btn-clear {
+      background: #7b1c1c;
+      color: #ffd0d0;
+    }
+    .btn-clear:hover { background: #a32424; }
+
+    .count {
+      margin-left: auto;
+      font-size: 12px;
+      color: #888;
+      white-space: nowrap;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #555;
+      padding: 4px 10px;
+      background: #0e1117;
+    }
+
+    .canvas-wrap {
+      overflow: auto;
+      background: #161920;
+    }
+
+    canvas {
+      display: block;
+      cursor: crosshair;
+      max-width: 100%;
+    }
+
+    .no-image {
+      padding: 32px;
+      text-align: center;
+      color: #555;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <span class="toolbar-title">🅿 Parking Space Drawer</span>
+    <button class="btn-undo" id="btnUndo" onclick="undo()">↩ Undo last</button>
+    <button class="btn-clear" id="btnClear" onclick="clearAll()">🗑 Clear all</button>
+    <span class="count" id="count">0 spaces marked</span>
+  </div>
+  <div class="hint">Click and drag to draw a rectangle around each parking space.</div>
+
+  <div class="canvas-wrap">
+    <canvas id="canvas"></canvas>
+    <div class="no-image" id="placeholder">Upload an image above to begin drawing.</div>
+  </div>
+
+  <script>
+    /* ── Streamlit component v1 protocol ── */
+    const STREAMLIT_ORIGIN = "*";   // allow any parent origin
+
+    function postToStreamlit(type, payload) {
+      window.parent.postMessage({ type, ...payload }, STREAMLIT_ORIGIN);
+    }
+
+    function setFrameHeight(h) {
+      postToStreamlit("streamlit:setFrameHeight", { height: h });
+    }
+
+    function sendValue(value) {
+      postToStreamlit("streamlit:componentChanged", { value });
+    }
+
+    // Listen for render messages from Streamlit
+    window.addEventListener("message", function (event) {
+      const msg = event.data;
+      if (!msg || !msg.type) return;
+
+      if (msg.type === "streamlit:render") {
+        const args = msg.args || {};
+        if (args.image) {
+          onRender(args);
+        }
+      }
+    });
+
+    // Signal readiness
+    postToStreamlit("streamlit:componentReady", { apiVersion: 1 });
+
+
+    /* ── State ── */
+    const canvas   = document.getElementById("canvas");
+    const ctx      = canvas.getContext("2d");
+    const placeholder = document.getElementById("placeholder");
+
+    let imgEl        = null;
+    let boxes        = [];   // [{x, y, w, h}] in CANVAS pixels
+    let drawing      = false;
+    let startX = 0, startY = 0, curX = 0, curY = 0;
+    let canvasScale  = 1;    // canvas-px / image-px
+
+
+    /* ── Rendering ── */
+    function onRender(args) {
+      placeholder.style.display = "none";
+      canvas.style.display      = "block";
+
+      const src = args.image;  // data-URI
+
+      // Reset boxes when the image changes (different key)
+      if (imgEl && imgEl._src !== src) {
+        boxes = [];
+      }
+
+      const img = new Image();
+      img.onload = function () {
+        img._src = src;
+        imgEl    = img;
+
+        // Fit to container (max 900px, respecting window width)
+        const maxW = Math.min(900, window.innerWidth - 4);
+        canvasScale  = maxW / img.naturalWidth;
+        canvas.width  = Math.round(img.naturalWidth  * canvasScale);
+        canvas.height = Math.round(img.naturalHeight * canvasScale);
+
+        redraw();
+        // Frame height = toolbar + hint + canvas + small margin
+        setFrameHeight(canvas.height + 64);
+        sendValue(exportBoxes());
+      };
+      img.src = src;
+    }
+
+    function redraw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Background image
+      if (imgEl) ctx.drawImage(imgEl, 0, 0, canvas.width, canvas.height);
+
+      // Saved boxes
+      boxes.forEach(function (b, i) {
+        ctx.fillStyle   = "rgba(0, 200, 83, 0.13)";
+        ctx.strokeStyle = "#00c853";
+        ctx.lineWidth   = 2;
+        ctx.setLineDash([]);
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+
+        // Label badge
+        const label = "P" + String(i + 1).padStart(2, "0");
+        ctx.font      = "bold 12px sans-serif";
+        const tw      = ctx.measureText(label).width;
+        ctx.fillStyle = "#00c853";
+        ctx.fillRect(b.x, b.y, tw + 8, 18);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(label, b.x + 4, b.y + 13);
+      });
+
+      // Active (in-progress) rectangle
+      if (drawing) {
+        const x = Math.min(startX, curX);
+        const y = Math.min(startY, curY);
+        const w = Math.abs(curX - startX);
+        const h = Math.abs(curY - startY);
+        ctx.strokeStyle = "#ffd600";
+        ctx.lineWidth   = 2;
+        ctx.setLineDash([6, 3]);
+        ctx.strokeRect(x, y, w, h);
+        ctx.setLineDash([]);
+        ctx.fillStyle   = "rgba(255, 214, 0, 0.08)";
+        ctx.fillRect(x, y, w, h);
+      }
+
+      document.getElementById("count").textContent =
+        boxes.length + " space" + (boxes.length !== 1 ? "s" : "") + " marked";
+    }
+
+
+    /* ── Mouse events ── */
+    canvas.addEventListener("mousedown", function (e) {
+      const r = canvas.getBoundingClientRect();
+      startX = e.clientX - r.left;
+      startY = e.clientY - r.top;
+      curX   = startX;
+      curY   = startY;
+      drawing = true;
+    });
+
+    canvas.addEventListener("mousemove", function (e) {
+      if (!drawing) return;
+      const r = canvas.getBoundingClientRect();
+      curX = e.clientX - r.left;
+      curY = e.clientY - r.top;
+      redraw();
+    });
+
+    canvas.addEventListener("mouseup", function (e) {
+      if (!drawing) return;
+      drawing = false;
+      const r = canvas.getBoundingClientRect();
+      curX = e.clientX - r.left;
+      curY = e.clientY - r.top;
+
+      const x = Math.min(startX, curX);
+      const y = Math.min(startY, curY);
+      const w = Math.abs(curX - startX);
+      const h = Math.abs(curY - startY);
+
+      // Ignore tiny accidental clicks
+      if (w > 8 && h > 8) {
+        boxes.push({ x: x, y: y, w: w, h: h });
+        sendValue(exportBoxes());
+      }
+      redraw();
+    });
+
+    // Cancel drawing if mouse leaves canvas
+    canvas.addEventListener("mouseleave", function () {
+      if (drawing) {
+        drawing = false;
+        redraw();
+      }
+    });
+
+
+    /* ── Touch support ── */
+    function touchPos(e) {
+      const r   = canvas.getBoundingClientRect();
+      const t   = e.changedTouches[0];
+      return { x: t.clientX - r.left, y: t.clientY - r.top };
+    }
+
+    canvas.addEventListener("touchstart", function (e) {
+      e.preventDefault();
+      const p = touchPos(e);
+      startX = p.x; startY = p.y; curX = p.x; curY = p.y;
+      drawing = true;
+    }, { passive: false });
+
+    canvas.addEventListener("touchmove", function (e) {
+      e.preventDefault();
+      if (!drawing) return;
+      const p = touchPos(e);
+      curX = p.x; curY = p.y;
+      redraw();
+    }, { passive: false });
+
+    canvas.addEventListener("touchend", function (e) {
+      e.preventDefault();
+      if (!drawing) return;
+      drawing = false;
+      const p = touchPos(e);
+      curX = p.x; curY = p.y;
+      const x = Math.min(startX, curX), y = Math.min(startY, curY);
+      const w = Math.abs(curX - startX), h = Math.abs(curY - startY);
+      if (w > 8 && h > 8) {
+        boxes.push({ x, y, w, h });
+        sendValue(exportBoxes());
+      }
+      redraw();
+    }, { passive: false });
+
+
+    /* ── Controls ── */
+    function undo() {
+      if (boxes.length === 0) return;
+      boxes.pop();
+      redraw();
+      sendValue(exportBoxes());
+    }
+
+    function clearAll() {
+      boxes = [];
+      redraw();
+      sendValue(exportBoxes());
+    }
+
+
+    /* ── Export ── */
+    // Convert canvas-space coords back to original image-space coords
+    function exportBoxes() {
+      return {
+        boxes: boxes.map(function (b) {
+          return {
+            x: b.x / canvasScale,
+            y: b.y / canvasScale,
+            w: b.w / canvasScale,
+            h: b.h / canvasScale,
+          };
+        }),
+      };
+    }
+  </script>
+</body>
+</html>

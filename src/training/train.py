@@ -171,8 +171,8 @@ def main():
     )
 
     model = build_cnn(
-        image_height=image_size,
-        image_width=int(config["data"]["image_height"]),
+        image_height=int(config["data"]["image_height"]),
+        image_width=int(config["data"]["image_width"]),
         channels=int(config["data"]["channels"]),
         learning_rate=learning_rate,
     )

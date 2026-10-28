@@ -1,8 +1,10 @@
 
 from functools import lru_cache
 from pathlib import Path
+import base64
 import io
 import json
+import sys
 
 import cv2
 import numpy as np
@@ -50,7 +52,7 @@ def root():
     return {
         "project": "CNN Parking Lot Occupancy Detector",
         "status": "running",
-        "endpoints": ["/health", "/predict", "/detect", "/docs"],
+        "endpoints": ["/health", "/predict", "/detect", "/auto-detect", "/docs"],
     }
 
 
@@ -78,7 +80,11 @@ def predict_crop(model, crop):
     height, width = int(model.input_shape[1]), int(model.input_shape[2])
     resized = cv2.resize(crop, (width, height))
     batch = np.expand_dims(resized.astype(np.float32) / 255.0, axis=0)
-    return float(model.predict(batch, verbose=0)[0][0])
+    probs = model.predict(batch, verbose=0)[0]  # shape: (num_classes,)
+    # Single sigmoid output => P(occupied); 2-class softmax => probs[1] is P(occupied).
+    if probs.shape[0] == 1:
+        return float(probs[0])
+    return float(probs[1])
 
 
 @app.post("/predict")
@@ -173,13 +179,84 @@ async def detect(file: UploadFile = File(...)):
     if not success:
         raise HTTPException(status_code=500, detail="Could not encode result image.")
 
-    import base64
-
     return {
         "total_slots_detected": len(results),
         "free_slots": free_count,
         "occupied_slots": occupied_count,
         "threshold": OCCUPIED_THRESHOLD,
         "slots": results,
+        "annotated_image": base64.b64encode(encoded.tobytes()).decode("ascii"),
+    }
+
+
+@app.get("/auto-detect")
+def auto_detect_info():
+    return {
+        "endpoint": "/auto-detect",
+        "method": "POST",
+        "description": "Send a multipart/form-data POST request with 'file': <image> to automatically detect and classify parking spaces.",
+    }
+
+
+@app.post("/auto-detect")
+async def auto_detect(
+    file: UploadFile = File(...),
+    threshold: float = OCCUPIED_THRESHOLD,
+    target_slots: int = 0,
+):
+    """
+    Upload any parking-lot image; the API will:
+      1. Detect the parking bays using AI + structural analysis.
+      2. Classify every candidate with the parking-lot CNN.
+      3. Return a clean annotated image (base64 JPEG) + occupancy statistics.
+    """
+    # Import here so the API still starts if ultralytics is not installed yet
+    try:
+        sys.path.insert(0, str(BASE_DIR))
+        from src.detection.auto_detector import detect_and_classify, annotate_image
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"auto_detector module unavailable: {exc}",
+        )
+
+    image_bytes = await file.read()
+    image_rgb   = read_rgb_image(image_bytes)
+
+    model      = get_model()
+    image_size = int(model.input_shape[1])   # CNN input size (e.g. 96)
+
+    spaces = detect_and_classify(
+        image_rgb,
+        model,
+        image_size=image_size,
+        cnn_threshold=threshold,
+        target_slots=target_slots,
+    )
+
+    annotated_bgr = annotate_image(image_rgb, spaces)
+
+    success, encoded = cv2.imencode(".jpg", annotated_bgr, [cv2.IMWRITE_JPEG_QUALITY, 92])
+    if not success:
+        raise HTTPException(status_code=500, detail="Could not encode result image.")
+
+    free_count = sum(1 for s in spaces if s["status"] == "vacant")
+    occ_count  = sum(1 for s in spaces if s["status"] == "occupied")
+
+    return {
+        "total_spaces"    : len(spaces),
+        "free_spaces"     : free_count,
+        "occupied_spaces" : occ_count,
+        "threshold"       : OCCUPIED_THRESHOLD,
+        "spaces": [
+            {
+                "id"                  : s["id"],
+                "status"              : s["status"],
+                "bbox"                : s["bbox"],
+                "occupied_probability": s["occupied_probability"],
+                "detection_source"    : s["detection_source"],
+            }
+            for s in spaces
+        ],
         "annotated_image": base64.b64encode(encoded.tobytes()).decode("ascii"),
     }

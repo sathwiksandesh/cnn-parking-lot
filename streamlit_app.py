@@ -1,191 +1,242 @@
+"""
+streamlit_app.py
+~~~~~~~~~~~~~~~~
+CNN Parking Lot Occupancy Detector – Streamlit front-end.
 
-import os
+Workflow:
+  1. User uploads a parking-lot image.
+  2. App sends the image to the FastAPI /auto-detect endpoint.
+  3. The API runs YOLOv8 + CNN to locate and classify every parking space.
+  4. Results are displayed: annotated image, summary metrics, per-space table.
+"""
+
 import base64
+import io
+import os
+
+import pandas as pd
 import requests
 import streamlit as st
 from PIL import Image
 
+def render_image(image_input, caption: str = ""):
+    """
+    Renders an image directly via inline base64 data URI to prevent Streamlit /
+    Starlette ASGI media server crashes that produce broken image icons.
+    """
+    if isinstance(image_input, str):
+        b64_str = image_input
+    elif isinstance(image_input, (bytes, bytearray)):
+        b64_str = base64.b64encode(image_input).decode("ascii")
+    elif hasattr(image_input, "getvalue"):
+        b64_str = base64.b64encode(image_input.getvalue()).decode("ascii")
+    elif isinstance(image_input, Image.Image):
+        buf = io.BytesIO()
+        image_input.save(buf, format="JPEG", quality=95)
+        b64_str = base64.b64encode(buf.getvalue()).decode("ascii")
+    else:
+        b64_str = ""
+
+    caption_html = (
+        f'<p style="text-align: center; color: #a0aec0; font-size: 0.88rem; margin-top: 6px; margin-bottom: 0;">{caption}</p>'
+        if caption else ""
+    )
+    st.markdown(
+        f'<div style="margin: 12px 0; text-align: center;">'
+        f'<img src="data:image/jpeg;base64,{b64_str}" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />'
+        f'{caption_html}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
+# ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Smart Parking | CNN Detector",
+    page_title="CNN Parking Occupancy Detector",
     page_icon="🅿️",
     layout="wide",
 )
 
-st.title("CNN Parking Lot Occupancy Detector")
-st.write(
-    "Upload an image of a parking lot to detect configured parking slots "
-    "and classify each slot as free or occupied using a trained CNN."
-)
-
-# Load backend URL from Streamlit secrets or environment variables
+# ── Sidebar – backend URL ─────────────────────────────────────────────────────
 try:
-    configured_api_url = st.secrets.get("API_URL", "")
+    _secret_url = st.secrets.get("API_URL", "")
 except Exception:
-    configured_api_url = ""
+    _secret_url = ""
 
-configured_api_url = configured_api_url or os.getenv("API_URL", "")
-
-# Sidebar settings
 with st.sidebar:
-    st.header("Backend settings")
-
+    st.header("⚙️ Settings")
     api_url = st.text_input(
         "FastAPI URL",
-        value=configured_api_url,
-        placeholder="https://your-service.onrender.com",
-        help=(
-            "Enter your deployed Render URL, or "
-            "http://127.0.0.1:8000 for local testing."
-        ),
+        value=_secret_url or os.getenv("API_URL", "http://127.0.0.1:8000"),
+        help="Base URL of the running FastAPI backend.",
     ).strip().rstrip("/")
 
-    st.divider()
+    st.markdown("---")
+    st.subheader("🎯 Detection Options")
+    threshold = st.slider(
+        "Occupancy Threshold",
+        min_value=0.10,
+        max_value=0.80,
+        value=0.30,
+        step=0.05,
+        help="Probability threshold to classify a parking space as Occupied.",
+    )
 
-    st.subheader("Model information")
-    st.write("Architecture: CNN")
-    st.write("Input: 96 × 96 RGB")
-    st.write("Parameters: 57,865")
-    st.write("Occupied threshold: 0.30")
+    slot_mode = st.radio(
+        "Parking Space Count",
+        options=["Auto-detect", "Specify exact count"],
+        help="Let AI automatically determine spaces or specify the count.",
+    )
 
-# Upload parking lot image
-uploaded_file = st.file_uploader(
-    "Choose a parking-lot image",
-    type=["jpg", "jpeg", "png", "webp"],
+    if slot_mode == "Specify exact count":
+        target_slots = st.number_input(
+            "Exact Number of Parking Bays",
+            min_value=1,
+            max_value=40,
+            value=10,
+            step=1,
+            help="Specify the exact number of parking bays across the lot.",
+        )
+    else:
+        target_slots = 0
+
+    st.markdown("---")
+    st.caption(
+        "**How it works**\n\n"
+        "1. AI identifies the active parking row and space boundaries.\n"
+        "2. Custom CNN classifies each parking bay as Free or Occupied.\n"
+        "3. Results are annotated with non-overlapping badges."
+    )
+
+# ── Header ────────────────────────────────────────────────────────────────────
+st.title("🅿️ CNN Parking Lot Occupancy Detector")
+st.write(
+    "Upload a parking-lot image. The system will **automatically** detect "
+    "parking spaces, classify each one as **free** or **occupied**, and "
+    "display the annotated result — no manual drawing required."
 )
 
-if uploaded_file is not None:
+# ── Image upload ──────────────────────────────────────────────────────────────
+uploaded = st.file_uploader(
+    "Upload a parking-lot image",
+    type=["jpg", "jpeg", "png", "webp"],
+    help="Overhead or elevated camera views work best.",
+)
+
+if not uploaded:
+    st.info("👆 Upload a parking-lot image to get started.")
+    st.stop()
+
+# Show original image
+try:
+    original = Image.open(uploaded).convert("RGB")
+except Exception:
+    st.error("Could not read this image.")
+    st.stop()
+
+img_w, img_h = original.size
+render_image(uploaded, caption=f"Uploaded image — {img_w} × {img_h} px")
+
+# ── Detect button ─────────────────────────────────────────────────────────────
+if not st.button(
+    "🔍 Detect & Classify Parking Spaces",
+    type="primary",
+    use_container_width=True,
+):
+    st.stop()
+
+# ── Call API ──────────────────────────────────────────────────────────────────
+with st.spinner("Running parking-space detection and CNN classification…"):
+    uploaded.seek(0)
     try:
-        image = Image.open(uploaded_file).convert("RGB")
-
-        left, right = st.columns([1, 1], gap="large")
-
-        with left:
-            st.subheader("Uploaded image")
-            st.image(
-                image,
-                use_container_width=True,
-            )
-
-        with right:
-            st.subheader("Parking-slot detection")
-
-            if st.button(
-                "Detect all parking slots",
-                type="primary",
-                use_container_width=True,
-            ):
-                if not api_url:
-                    st.error(
-                        "Set the FastAPI URL in the sidebar first."
-                    )
-                else:
-                    try:
-                        with st.spinner(
-                            "Detecting occupancy for each configured slot..."
-                        ):
-                            uploaded_file.seek(0)
-
-                            response = requests.post(
-                                f"{api_url}/detect",
-                                files={
-                                    "file": (
-                                        uploaded_file.name,
-                                        uploaded_file.getvalue(),
-                                        uploaded_file.type or "image/jpeg",
-                                    )
-                                },
-                                timeout=180,
-                            )
-
-                        if response.ok:
-                            result = response.json()
-
-                            # Decode annotated image returned by the backend
-                            annotated_bytes = base64.b64decode(
-                                result["annotated_image"],
-                                validate=True,
-                            )
-
-                            st.subheader("Parking-slot detection")
-
-                            st.image(
-                                annotated_bytes,
-                                caption="Green = Free | Red = Occupied",
-                                use_container_width=True,
-                            )
-
-                            # Display parking occupancy metrics
-                            col1, col2, col3 = st.columns(3)
-
-                            col1.metric(
-                                "Total slots",
-                                result["total_slots_detected"],
-                            )
-
-                            col2.metric(
-                                "Free slots",
-                                result["free_slots"],
-                            )
-
-                            col3.metric(
-                                "Occupied slots",
-                                result["occupied_slots"],
-                            )
-
-                            # Display individual slot predictions
-                            with st.expander(
-                                "Individual slot predictions"
-                            ):
-                                st.dataframe(
-                                    result["slots"],
-                                    use_container_width=True,
-                                )
-
-                        else:
-                            try:
-                                detail = response.json().get(
-                                    "detail",
-                                    response.text,
-                                )
-                            except ValueError:
-                                detail = response.text
-
-                            st.error(
-                                f"Backend error ({response.status_code}): "
-                                f"{detail}"
-                            )
-
-                    except requests.exceptions.Timeout:
-                        st.error(
-                            "The backend took too long to respond. "
-                            "If this is a new Render deployment, wait "
-                            "a little and try again."
-                        )
-
-                    except requests.exceptions.RequestException as exc:
-                        st.error(
-                            "Could not reach the backend. Check the URL "
-                            "and confirm the FastAPI service is running. "
-                            f"Details: {exc}"
-                        )
-
-                    except (ValueError, KeyError, TypeError) as exc:
-                        st.error(
-                            "The backend returned an invalid response. "
-                            "Check that /detect returns a valid JSON "
-                            "response with all required fields. "
-                            f"Details: {exc}"
-                        )
-
-    except Exception:
-        st.error(
-            "This image could not be opened. Please try another image."
+        resp = requests.post(
+            f"{api_url}/auto-detect",
+            files={"file": (uploaded.name, uploaded.read(), "image/jpeg")},
+            params={
+                "threshold": threshold,
+                "target_slots": target_slots,
+            },
+            timeout=180,
         )
+        resp.raise_for_status()
+        result = resp.json()
+    except requests.ConnectionError:
+        st.error(
+            f"Could not connect to the API at **{api_url}**. "
+            "Make sure the FastAPI server is running:\n\n"
+            "```\nuvicorn api.main:app --reload\n```"
+        )
+        st.stop()
+    except requests.HTTPError as exc:
+        detail = ""
+        try:
+            detail = exc.response.json().get("detail", "")
+        except Exception:
+            pass
+        st.error(f"API returned an error ({exc.response.status_code}): {detail or exc}")
+        st.stop()
+    except requests.RequestException as exc:
+        st.error(f"Request failed: {exc}")
+        st.stop()
+
+# ── Results ───────────────────────────────────────────────────────────────────
+total    = result.get("total_spaces", 0)
+free_n   = result.get("free_spaces", 0)
+occ_n    = result.get("occupied_spaces", 0)
+spaces   = result.get("spaces", [])
+
+if total == 0:
+    st.warning(
+        "No parking spaces were detected in this image. "
+        "Try a different image with clearly visible vehicles or painted lane markings."
+    )
+    st.stop()
+
+# Annotated image
+ann_bytes = base64.b64decode(result["annotated_image"])
+ann_img   = Image.open(io.BytesIO(ann_bytes))
+
+st.subheader("📸 Detection Result")
+render_image(
+    result["annotated_image"],
+    caption="🟢 Green = Free   🔴 Red = Occupied",
+)
+
+# Metrics
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Total Spaces", total)
+col2.metric("🟢 Free", free_n)
+col3.metric("🔴 Occupied", occ_n)
+rate = (occ_n / total * 100) if total > 0 else 0
+col4.metric("Occupancy Rate", f"{rate:.1f}%")
+
+# Download
+out_buf = io.BytesIO(ann_bytes)
+st.download_button(
+    "⬇️ Download annotated image",
+    data=out_buf.getvalue(),
+    file_name="parking_occupancy_result.jpg",
+    mime="image/jpeg",
+)
+
+# Per-space table 
+if spaces:
+    st.subheader("📋 Per-space details")
+    df = pd.DataFrame([
+        {
+            "ID"                     : s["id"],
+            "Status"                 : s["status"].capitalize(),
+            "Occupied probability (%)" : round(s["occupied_probability"] * 100, 1),
+            "Detected by"            : s["detection_source"],
+        }
+        for s in spaces
+    ])
+    st.dataframe(df, use_container_width=True, hide_index=True)
 
 st.divider()
-
 st.caption(
-    "Academic demonstration using a trained CNN and the CNRPark-EXT "
-    "parking dataset. Upload a parking-lot image to detect configured "
-    "parking slots. This version does not process a live CCTV stream."
+    "Detection uses YOLOv8-nano (vehicle localisation) + a custom CNN "
+    "(occupancy classification). Empty-space inference relies on row-gap "
+    "analysis of detected vehicle positions and may miss spaces at row ends "
+    "or in very sparse lots."
 )

@@ -57,7 +57,7 @@ def draw_results(frame, results):
         confidence = result["confidence"]
         slot_id = result["id"]
 
-        color = COLORS[status]
+        color = COLORS.get(status, (128, 128, 128))  # default grey for unknown status
 
         cv2.polylines(
             output, [polygon], True, color, 2, cv2.LINE_AA
