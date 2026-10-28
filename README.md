@@ -168,3 +168,164 @@ cnn-parking-lot/
 ├── requirements-api.txt                # FastAPI and deep learning backend dependencies
 ├── streamlit_app.py                    # Interactive Streamlit driver guidance web application
 └── yolov8n.pt                          # Lightweight vehicle candidate localization weights
+```
+⚙️ Installation & Setup
+Prerequisites
+
+Before installing the project, ensure you have the following:
+
+Python: 3.10 or 3.11
+pip: Python package manager
+Optional: NVIDIA GPU with CUDA support for accelerated training. Inference runs comfortably on a CPU.
+Step 1: Clone the Repository
+bash
+git clone https://github.com/your-username/cnn-parking-lot.git
+cd cnn-parking-lot
+
+Step 2: Create and Activate a Virtual Environment
+Windows (PowerShell)
+powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+
+Linux / macOS
+bash
+python3 -m venv .venv
+source .venv/bin/activate
+
+Step 3: Install Dependencies
+
+Install the core frontend and utility dependencies:
+
+bash
+pip install -r requirements.txt
+
+
+Install the API and deep learning inference dependencies:
+
+bash
+pip install -r requirements-api.txt
+
+🚀 Running the System
+1. Verify the Environment
+
+Run the diagnostic script to ensure OpenCV, TensorFlow, and Streamlit are correctly configured.
+
+bash
+python main.py
+
+2. Start the FastAPI Backend
+
+Start the asynchronous API server using Uvicorn:
+
+bash
+uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+
+
+Once the server is running, access the API documentation:
+
+Swagger UI: http://localhost:8000/docs
+ReDoc: http://localhost:8000/redoc
+3. Start the Streamlit Web Dashboard
+
+Open a separate terminal, activate the virtual environment, and run:
+
+bash
+streamlit run streamlit_app.py
+
+
+Open the dashboard in your browser:
+
+http://localhost:8501
+
+The dashboard provides an interface for interacting with the real-time parking occupancy detection and driver guidance system.
+
+🔌 REST API Reference
+
+The FastAPI backend exposes endpoints for health monitoring, parking slot classification, configured-bay detection, and automatic parking bay detection.
+
+Method	Endpoint	Description	Request Payload	Response
+GET	/	API health and status check	None	Project information and running status
+GET	/health	Service diagnostics and model availability	None	Health status and configured slot count
+POST	/predict	Classify a single parking slot crop	Image file (multipart form data)	Prediction and occupied probability
+POST	/detect	Detect parking bays using configured JSON polygon coordinates	Surveillance image	Annotated Base64 JPEG, free/occupied totals, and slot details
+POST	/auto-detect	Automatically detect parking bays using YOLOv8 and classify occupancy using the CNN	Image file and threshold	Annotated Base64 JPEG, bounding boxes, and occupancy statuses
+Example: Python API Request
+
+The following example sends an image to the /auto-detect endpoint and prints the parking occupancy statistics.
+
+python
+import requests
+
+url = "http://localhost:8000/auto-detect"
+
+with open("outputs/parking_video_sample.jpg", "rb") as f:
+    response = requests.post(
+        url,
+        files={"file": f}
+    )
+
+response.raise_for_status()
+data = response.json()
+
+print(f"Total Bays Detected: {data['total_spaces']}")
+print(
+    f"Vacant: {data['free_spaces']} | "
+    f"Occupied: {data['occupied_spaces']}"
+)
+
+📊 Dataset & Evaluation
+
+The network was trained and evaluated using the CNR-EXT (Visual Parking Lot Dataset), collected by the National Research Council (CNR) in Pisa, Italy.
+
+Dataset Overview
+Metric	Details
+Total Crops Monitored	144,958 images
+Camera Perspectives	9 distinct perspectives
+Training Set	98,542 samples
+Validation Set	27,801 samples
+Held-Out Test Set	18,615 samples
+Calibrated Threshold	0.30
+Dataset Split Strategy
+
+A strict date-grouped partitioning strategy was used to minimize data leakage between training, validation, and test sets. Images from identical calendar dates were kept within their respective partitions.
+
+Training set: Clear, sunny conditions with strong and harsh shadows.
+Validation set: Overcast conditions with diffuse lighting.
+Held-out test set: Heavy rain, asphalt puddles, and camera glare.
+Threshold Calibration
+
+An occupancy classification threshold of 0.30 was selected to maximize the macro F1-score across challenging visual conditions, including non-uniform sunlight, shadows, and reflections.
+
+🛠️ Model Training & Evaluation Scripts
+
+The repository includes scripts for training the CNN, evaluating full-frame parking detection, generating demonstration videos, and producing the academic project report.
+
+1. Train the CNN Model
+
+Retrain the lightweight CNN from scratch:
+
+bash
+python scripts/train_cnr_ext_fast.py
+
+2. Evaluate Full-Frame Accuracy
+
+Evaluate multi-camera parking detection performance across different weather and lighting scenarios:
+
+bash
+python scripts/validate_cnr_ext_full_frames.py
+
+3. Generate a Demonstration Video
+
+Create an annotated demonstration video with temporal smoothing:
+
+bash
+python scripts/create_cnr_demo_video.py
+
+4. Generate the Academic Project Report
+
+Regenerate the official academic project report in Microsoft Word (.docx) format:
+
+bash
+python scripts/generate_report_docx.py
+
