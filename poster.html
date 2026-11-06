@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mini Project Poster – CNN Parking Lot</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Open+Sans:wght@400;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange: #F7941D;
+    --dark-blue: #1A2B5F;
+    --mid-blue: #1E3A8A;
+    --light-blue: #2563EB;
+    --teal: #0EA5E9;
+    --white: #FFFFFF;
+    --light-gray: #F1F5F9;
+    --text-dark: #0F172A;
+    --green: #16A34A;
+    --accent-orange: #EA580C;
+  }
+
+  body {
+    font-family: 'Open Sans', sans-serif;
+    background: #e5e7eb;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .poster {
+    width: 794px;
+    min-height: 1123px;
+    background: var(--white);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 3px solid var(--orange);
+    gap: 10px;
+  }
+
+  .college-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 54px;
+    height: 54px;
+    background: var(--dark-blue);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: var(--white);
+    font-weight: 900;
+    font-family: 'Montserrat', sans-serif;
+    flex-shrink: 0;
+  }
+
+  .college-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .college-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--dark-blue);
+    letter-spacing: 1px;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  .college-sub {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .college-auto {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--dark-blue);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border-top: 2px solid var(--orange);
+    padding-top: 2px;
+    margin-top: 2px;
+  }
+
+  .excellence-badge {
+    text-align: center;
+    border-left: 3px solid var(--orange);
+    padding-left: 14px;
+  }
+
+  .excellence-num {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 30px;
+    font-weight: 900;
+    color: var(--dark-blue);
+    line-height: 1;
+  }
+
+  .excellence-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--dark-blue);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── DEPT BANNER ── */
+  .dept-banner {
+    background: var(--dark-blue);
+    color: var(--white);
+    text-align: center;
+    padding: 7px 20px;
+  }
+
+  .dept-banner .dept-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #CBD5E1;
+  }
+
+  .dept-banner .dept-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--orange);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── CONTENT AREA ── */
+  .content {
+    padding: 14px 18px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ── PROJECT TITLE AREA ── */
+  .project-title-area {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .title-left {
+    flex: 1;
+  }
+
+  .mini-project-badge {
+    display: inline-block;
+    background: var(--dark-blue);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 3px;
+    margin-bottom: 6px;
+  }
+
+  .project-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--text-dark);
+    line-height: 1.25;
+  }
+
+  .project-title span {
+    color: var(--orange);
+  }
+
+  .project-tagline {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+
+  /* dashboard mockup */
+  .dashboard-mockup {
+    width: 220px;
+    flex-shrink: 0;
+    background: #0F172A;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #334155;
+  }
+
+  .dash-header {
+    background: var(--dark-blue);
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dash-dot { width:7px; height:7px; border-radius:50%; }
+  .dash-title-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .dash-body {
+    padding: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px;
+  }
+
+  .kpi-card {
+    background: #1E293B;
+    border-radius: 6px;
+    padding: 5px;
+    text-align: center;
+  }
+
+  .kpi-val {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--orange);
+  }
+
+  .kpi-label {
+    font-size: 7px;
+    color: #94A3B8;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .dash-chart-row {
+    padding: 0 8px 8px;
+    display: flex;
+    gap: 6px;
+  }
+
+  .dash-bar-chart {
+    flex: 1;
+    background: #1E293B;
+    border-radius: 6px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .bar-label { font-size: 7px; color: #94A3B8; width: 28px; }
+  .bar-track { flex: 1; background: #334155; border-radius: 3px; height: 7px; }
+  .bar-fill { height: 100%; border-radius: 3px; }
+
+  .dash-pie {
+    width: 60px;
+    background: #1E293B;
+    border-radius: 6px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .pie-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: conic-gradient(var(--orange) 0% 65%, #16A34A 65% 100%);
+  }
+
+  .pie-legend {
+    font-size: 6px;
+    color: #94A3B8;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  /* ── SECTION BOXES ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  .section-box {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #E2E8F0;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .section-header.orange { background: var(--orange); color: var(--white); }
+  .section-header.dark-blue { background: var(--dark-blue); color: var(--white); }
+  .section-header.teal { background: var(--teal); color: var(--white); }
+  .section-header.green { background: var(--green); color: var(--white); }
+  .section-header.mid-blue { background: var(--mid-blue); color: var(--white); }
+
+  .section-body { padding: 10px 12px; background: var(--white); font-size: 10px; color: #334155; line-height: 1.6; }
+  .section-body.gray { background: var(--light-gray); }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+
+  .check-icon { color: var(--orange); font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+  .check-icon.green { color: var(--green); }
+
+  /* ── ARCHITECTURE ── */
+  .arch-flow {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    background: var(--light-gray);
+  }
+
+  .arch-node {
+    background: var(--white);
+    border: 1.5px solid var(--dark-blue);
+    border-radius: 8px;
+    padding: 5px 8px;
+    text-align: center;
+    font-size: 8.5px;
+    font-weight: 700;
+    color: var(--dark-blue);
+    line-height: 1.3;
+    min-width: 70px;
+  }
+
+  .arch-node.orange-node { background: var(--orange); color: var(--white); border-color: var(--orange); }
+  .arch-node.blue-node { background: var(--dark-blue); color: var(--white); border-color: var(--dark-blue); }
+  .arch-node.teal-node { background: var(--teal); color: var(--white); border-color: var(--teal); }
+  .arch-node.green-node { background: var(--green); color: var(--white); border-color: var(--green); }
+
+  .arch-arrow {
+    color: var(--dark-blue);
+    font-size: 14px;
+    font-weight: 900;
+  }
+
+  .arch-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border: 1.5px dashed var(--mid-blue);
+    border-radius: 8px;
+    padding: 5px;
+    background: rgba(37,99,235,0.05);
+  }
+
+  .arch-group-label {
+    font-size: 7.5px;
+    font-weight: 700;
+    color: var(--mid-blue);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .arch-group-row { display: flex; gap: 4px; justify-content: center; }
+
+  /* ── STEP BY STEP ── */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+    padding: 10px 12px;
+    background: var(--light-gray);
+  }
+
+  .step-card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 7px 5px;
+    text-align: center;
+    border: 1px solid #E2E8F0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--orange);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8px;
+    font-weight: 800;
+    color: var(--dark-blue);
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .step-icon { font-size: 18px; }
+
+  .step-desc {
+    font-size: 7.5px;
+    color: #475569;
+    line-height: 1.4;
+  }
+
+  /* ── TECH STACK / KEY FEATURES / OUTCOME ── */
+  .tech-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin-bottom: 4px;
+    font-size: 9.5px;
+  }
+
+  .tech-name {
+    font-weight: 700;
+    color: var(--dark-blue);
+    min-width: 72px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .tech-desc { color: #475569; }
+  .tech-dash { color: #94A3B8; }
+
+  /* ── BENCHMARK TABLE ── */
+  .bench-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5px;
+  }
+
+  .bench-table th {
+    background: var(--dark-blue);
+    color: var(--white);
+    padding: 4px 6px;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 7.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .bench-table th:first-child { text-align: left; }
+
+  .bench-table td {
+    padding: 3.5px 6px;
+    border-bottom: 1px solid #E2E8F0;
+    text-align: center;
+    color: #334155;
+  }
+
+  .bench-table td:first-child { text-align: left; font-weight: 600; }
+  .bench-table tr:nth-child(even) td { background: #F8FAFC; }
+  .bench-table tr.highlight td { background: rgba(247,148,29,0.12); font-weight: 700; color: var(--dark-blue); }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--dark-blue);
+    display: flex;
+    align-items: stretch;
+    min-height: 72px;
+  }
+
+  .footer-left {
+    background: var(--orange);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    flex: 1;
+  }
+
+  .footer-divider {
+    width: 2px;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    flex: 1;
+  }
+
+  .footer-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .footer-avatar.orange-bg { background: rgba(255,255,255,0.25); }
+  .footer-avatar.white-bg { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); }
+
+  .footer-info { display: flex; flex-direction: column; }
+
+  .footer-role {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8.5px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.75);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .footer-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--white);
+    line-height: 1.1;
+  }
+
+  .footer-detail {
+    font-size: 10px;
+    color: rgba(255,255,255,0.8);
+    margin-top: 2px;
+    font-weight: 600;
+  }
+
+  /* Model Layer table */
+  .model-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8px;
+  }
+
+  .model-table th {
+    background: var(--mid-blue);
+    color: var(--white);
+    padding: 3px 5px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 7.5px;
+    text-transform: uppercase;
+  }
+
+  .model-table td {
+    padding: 2.5px 5px;
+    border-bottom: 1px solid #E2E8F0;
+    color: #334155;
+  }
+
+  .model-table tr:last-child td { background: rgba(247,148,29,0.1); font-weight: 700; color: var(--dark-blue); }
+
+  .pill {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 20px;
+    font-size: 7px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .pill.orange { background: var(--orange); color: white; }
+  .pill.blue { background: var(--mid-blue); color: white; }
+  .pill.green { background: var(--green); color: white; }
+</style>
+</head>
+<body>
+<div class="poster">
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <div class="header">
+    <div class="college-logo">
+      <div class="logo-icon">RC</div>
+      <div class="college-info">
+        <div class="college-name">Ramachandra</div>
+        <div class="college-sub">College of Engineering</div>
+        <div class="college-auto">Autonomous</div>
+      </div>
+    </div>
+    <div class="excellence-badge">
+      <div class="excellence-num">25<sup style="font-size:14px">+</sup></div>
+      <div class="excellence-text">Years of Academic<br>Excellence</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DEPT BANNER ═══════════════ -->
+  <div class="dept-banner">
+    <div class="dept-label">Department of</div>
+    <div class="dept-name">Artificial Intelligence &amp; Data Science (AI&amp;DS)</div>
+  </div>
+
+  <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+  <div class="content">
+
+    <!-- PROJECT TITLE -->
+    <div class="project-title-area">
+      <div class="title-left">
+        <div class="mini-project-badge">🎓 Mini Project</div>
+        <div class="project-title">
+          CNN Parking Lot — <span>Smart Parking<br>Occupancy Detection</span><br>
+          <span style="color:var(--dark-blue); font-size:17px">using Lightweight CNN</span>
+        </div>
+        <div class="project-tagline">
+          Detect free and occupied parking bays in real-time using overhead surveillance cameras,<br>
+          a custom 63K-parameter CNN, YOLOv8 vehicle localisation, and an interactive Streamlit dashboard —<br>
+          with zero in-ground sensors and full GDPR privacy compliance.
+        </div>
+      </div>
+
+      <!-- Dashboard Mockup -->
+      <div class="dashboard-mockup">
+        <div class="dash-header">
+          <div class="dash-dot" style="background:#EF4444"></div>
+          <div class="dash-dot" style="background:#F59E0B"></div>
+          <div class="dash-dot" style="background:#10B981"></div>
+          <div class="dash-title-text">🅿️ Parking Occupancy Dashboard</div>
+        </div>
+        <div class="dash-body">
+          <div class="kpi-card"><div class="kpi-val">96%</div><div class="kpi-label">Accuracy</div></div>
+          <div class="kpi-card"><div class="kpi-val" style="color:#16A34A">8</div><div class="kpi-label">Free Slots</div></div>
+          <div class="kpi-card"><div class="kpi-val" style="color:#EF4444">12</div><div class="kpi-label">Occupied</div></div>
+        </div>
+        <div class="dash-chart-row">
+          <div class="dash-bar-chart">
+            <div style="font-size:7px;color:#94A3B8;font-weight:700;margin-bottom:2px;">SLOT STATUS</div>
+            <div class="bar-row"><span class="bar-label">Bay A</span><div class="bar-track"><div class="bar-fill" style="width:85%;background:#EF4444"></div></div></div>
+            <div class="bar-row"><span class="bar-label">Bay B</span><div class="bar-track"><div class="bar-fill" style="width:30%;background:#16A34A"></div></div></div>
+            <div class="bar-row"><span class="bar-label">Bay C</span><div class="bar-track"><div class="bar-fill" style="width:95%;background:#EF4444"></div></div></div>
+            <div class="bar-row"><span class="bar-label">Bay D</span><div class="bar-track"><div class="bar-fill" style="width:20%;background:#16A34A"></div></div></div>
+          </div>
+          <div class="dash-pie">
+            <div class="pie-circle"></div>
+            <div class="pie-legend"><span style="color:var(--orange)">■</span> Occupied 60%<br><span style="color:#16A34A">■</span> Free 40%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESCRIPTION + REAL-WORLD USE -->
+    <div class="two-col">
+      <div class="section-box">
+        <div class="section-header orange">📋 Description</div>
+        <div class="section-body">
+          <strong>CNN Parking Lot</strong> is a vision-based occupancy detection system that processes overhead surveillance
+          images and video feeds to classify every parking bay as <em>Free</em> or <em>Occupied</em> in real-time.
+          It uses an ultra-lightweight custom CNN (only <strong>63,137 parameters</strong>) trained on the <strong>CNR-EXT dataset</strong>
+          (144,958+ crops across 9 camera views, sunny to rainy conditions). YOLOv8-nano localises vehicle candidates
+          and the CNN verifies each slot with a calibrated 0.30 probability threshold.
+          A 3-frame temporal rolling filter eliminates flicker, and all results are served through
+          an asynchronous <strong>FastAPI microservice</strong> and an interactive <strong>Streamlit dashboard</strong>.
+        </div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header dark-blue">🌐 Real-World Use</div>
+        <div class="section-body">
+          <div class="check-item"><span class="check-icon green">✔</span> Real-time free/occupied parking bay detection from CCTV</div>
+          <div class="check-item"><span class="check-icon green">✔</span> Driver guidance to nearest available parking slot</div>
+          <div class="check-item"><span class="check-icon green">✔</span> Reduce urban traffic congestion (up to 30% from cruising)</div>
+          <div class="check-item"><span class="check-icon green">✔</span> No road-drilling — zero in-ground physical sensors needed</div>
+          <div class="check-item"><span class="check-icon green">✔</span> GDPR-compliant: no license plates or faces captured</div>
+          <div class="check-item"><span class="check-icon green">✔</span> Works across all weather: sun, rain, shadow, overcast</div>
+          <div style="margin-top:5px; display:flex; justify-content:flex-end;">
+            <div style="background:var(--dark-blue);color:white;border-radius:7px;padding:5px 10px;font-size:9px;font-weight:700;">🏙️ Smart City Parking</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYSTEM ARCHITECTURE -->
+    <div class="section-box">
+      <div class="section-header mid-blue">🏗️ System Architecture</div>
+      <div class="arch-flow">
+        <div class="arch-node blue-node">📷 Surveillance<br>Camera Feed<br>(RTSP / Image)</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node orange-node">✂️ ROI Extraction<br>&amp; Resize<br>96×96×3</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-group">
+          <div class="arch-group-label">🧠 AI Inference Engine</div>
+          <div class="arch-group-row">
+            <div class="arch-node teal-node">🔍 YOLOv8-nano<br>Vehicle<br>Localisation</div>
+            <div class="arch-node orange-node">⚡ Custom CNN<br>63K Params<br>p ≥ 0.30</div>
+          </div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node" style="background:#8B5CF6;color:white;border-color:#8B5CF6;">🕐 3-Frame<br>Temporal<br>Smoother</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-group">
+          <div class="arch-group-label">📤 Outputs</div>
+          <div class="arch-group-row">
+            <div class="arch-node green-node">🌐 FastAPI<br>REST API</div>
+            <div class="arch-node green-node">📊 Streamlit<br>Dashboard</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEPS -->
+    <div class="section-box">
+      <div class="section-header orange">🔄 Step-by-Step Execution</div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-icon">📷</div>
+          <div class="step-title">Input Image</div>
+          <div class="step-desc">Upload parking-lot image or RTSP stream via Streamlit frontend</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-icon">✂️</div>
+          <div class="step-title">ROI Extraction</div>
+          <div class="step-desc">Crop each slot patch; bilinear resize to 96×96×3; normalize [0,1]</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-icon">🔍</div>
+          <div class="step-title">YOLOv8 Detect</div>
+          <div class="step-desc">Localise vehicle candidates automatically; row-gap analysis for empty bays</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="step-icon">🧠</div>
+          <div class="step-title">CNN Classify</div>
+          <div class="step-desc">3-block CNN + GlobalAvgPool + Sigmoid; threshold p ≥ 0.30 → Occupied</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">5</div>
+          <div class="step-icon">🕐</div>
+          <div class="step-title">Temporal Filter</div>
+          <div class="step-desc">3-frame FIFO buffer smooths flicker, shadows &amp; transient false alarms</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">6</div>
+          <div class="step-icon">📊</div>
+          <div class="step-title">Visualise &amp; Guide</div>
+          <div class="step-desc">Annotated image + KPI metrics + per-slot table on Streamlit &amp; FastAPI</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TECH STACK + KEY FEATURES + OUTCOME -->
+    <div class="three-col">
+
+      <div class="section-box">
+        <div class="section-header dark-blue">🛠️ Tech Stack</div>
+        <div class="section-body">
+          <div class="tech-item"><span class="tech-name">🐍 Python</span><span class="tech-dash">–</span><span class="tech-desc">Core programming</span></div>
+          <div class="tech-item"><span class="tech-name">🔵 TensorFlow</span><span class="tech-dash">–</span><span class="tech-desc">CNN training &amp; inference</span></div>
+          <div class="tech-item"><span class="tech-name">🤖 YOLOv8</span><span class="tech-dash">–</span><span class="tech-desc">Vehicle localisation</span></div>
+          <div class="tech-item"><span class="tech-name">👁️ OpenCV</span><span class="tech-dash">–</span><span class="tech-desc">Image processing &amp; ROI</span></div>
+          <div class="tech-item"><span class="tech-name">⚡ FastAPI</span><span class="tech-dash">–</span><span class="tech-desc">Async REST microservice</span></div>
+          <div class="tech-item"><span class="tech-name">🌐 Streamlit</span><span class="tech-dash">–</span><span class="tech-desc">Interactive dashboard</span></div>
+          <div class="tech-item"><span class="tech-name">🦄 Uvicorn</span><span class="tech-dash">–</span><span class="tech-desc">ASGI production server</span></div>
+          <div class="tech-item"><span class="tech-name">🐼 Pandas</span><span class="tech-dash">–</span><span class="tech-desc">Results &amp; data handling</span></div>
+        </div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header orange">⭐ Key Features</div>
+        <div class="section-body">
+          <div class="check-item"><span class="check-icon">✔</span>Ultra-lightweight CNN — only 63,137 params (~0.75 MB)</div>
+          <div class="check-item"><span class="check-icon">✔</span>8.2 ms/slot inference on commodity CPU</div>
+          <div class="check-item"><span class="check-icon">✔</span>Dual-mode: polygon calibration &amp; auto-detect</div>
+          <div class="check-item"><span class="check-icon">✔</span>3-frame temporal smoothing — eliminates flicker</div>
+          <div class="check-item"><span class="check-icon">✔</span>All-weather resilience (sun, rain, shadow)</div>
+          <div class="check-item"><span class="check-icon">✔</span>GDPR-compliant — no ALPR, no faces stored</div>
+          <div class="check-item"><span class="check-icon">✔</span>Interactive annotated result with confidence scores</div>
+          <div class="check-item"><span class="check-icon">✔</span>REST API with Swagger docs + downloadable outputs</div>
+        </div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header green">📈 Outcome &amp; Benefits</div>
+        <div class="section-body">
+          <div class="check-item"><span class="check-icon green">✔</span>96.0% accuracy on CNR-EXT held-out test set</div>
+          <div class="check-item"><span class="check-icon green">✔</span>Outperforms ResNet-50 (95.2%) with 400× fewer params</div>
+          <div class="check-item"><span class="check-icon green">✔</span>Real-time free slot count &amp; occupancy rate KPIs</div>
+          <div class="check-item"><span class="check-icon green">✔</span>Per-bay confidence scores for transparency</div>
+          <div class="check-item"><span class="check-icon green">✔</span>Reduces cruising-related urban congestion</div>
+          <div class="check-item"><span class="check-icon green">✔</span>Zero infrastructure cost — uses existing cameras</div>
+          <div class="check-item"><span class="check-icon green">✔</span>Deployable at edge on low-cost hardware</div>
+          <div class="check-item"><span class="check-icon green">✔</span>Scalable to multi-lot, multi-camera deployments</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BENCHMARK TABLE -->
+    <div class="section-box">
+      <div class="section-header mid-blue">📊 Benchmark Comparison — CNR-EXT Held-Out Test Set</div>
+      <div class="section-body" style="padding:0;">
+        <table class="bench-table">
+          <thead>
+            <tr>
+              <th>Method / Model</th>
+              <th>Accuracy</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1-Score</th>
+              <th>Parameters</th>
+              <th>CPU Latency/Slot</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>HOG + SVM <em>(Almeida et al.)</em></td>
+              <td>89.42%</td><td>88.60%</td><td>89.15%</td><td>88.87%</td><td>~12K</td><td>3.1 ms</td>
+            </tr>
+            <tr>
+              <td>mAlexNet <em>(Amato et al.)</em></td>
+              <td>93.80%</td><td>93.25%</td><td>93.90%</td><td>93.57%</td><td>~2.4M</td><td>18.4 ms</td>
+            </tr>
+            <tr>
+              <td>ResNet-50 Transfer Learning</td>
+              <td>95.21%</td><td>95.10%</td><td>94.85%</td><td>94.97%</td><td>~25.6M</td><td>42.6 ms</td>
+            </tr>
+            <tr class="highlight">
+              <td>⭐ Proposed Fast CNN (Ours)</td>
+              <td><strong>95.998%</strong></td><td><strong>96.04%</strong></td><td><strong>96.10%</strong></td><td><strong>96.00%</strong></td><td><strong>63,137</strong></td><td><strong>8.2 ms</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <div class="footer">
+    <div class="footer-left">
+      <div class="footer-avatar orange-bg">🎓</div>
+      <div class="footer-info">
+        <div class="footer-role" style="color:rgba(255,255,255,0.8);">Mentor</div>
+        <div class="footer-name" style="font-size:13px;">Dr. Rajendra Kodamanchili</div>
+        <div class="footer-detail">Associate Professor, Dept of AI&amp;DS</div>
+      </div>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-right">
+      <div class="footer-avatar white-bg">👨‍🎓</div>
+      <div class="footer-info">
+        <div class="footer-role" style="color:rgba(255,255,255,0.65);">Submitted By</div>
+        <div class="footer-name">SIDDHANTAM SATHWIK SANDESH</div>
+        <div class="footer-detail">23ME1A5473 &nbsp;|&nbsp; B.Tech (AI&amp;DS)</div>
+        <div class="footer-detail">IV Year – I Semester (Mini Project)</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /poster -->
+</body>
+</html>
+

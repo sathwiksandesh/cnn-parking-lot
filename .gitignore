@@ -36,3 +36,6 @@ outputs/reports/
 outputs/processed_videos/
 outputs/debug_crops/
 outputs/cnrpark_demo/
+
+# Streamlit secrets — never commit real API keys or URLs
+.streamlit/secrets.toml

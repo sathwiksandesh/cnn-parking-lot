@@ -15,7 +15,7 @@ from PIL import Image, UnidentifiedImageError
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "models" / "cnr_ext_cnn_fast.keras"
-SLOTS_PATH = BASE_DIR / "configs" / "parking_slots_new_camera.json"
+SLOTS_PATH = BASE_DIR / "configs" / "parking_slots_demo.json"
 OCCUPIED_THRESHOLD = 0.30
 
 app = FastAPI(
@@ -87,6 +87,16 @@ def predict_crop(model, crop):
     return float(probs[1])
 
 
+def _cnn_classify(model, crop: np.ndarray, image_size: int) -> float:
+    """Run CNN on an RGB crop; returns P(occupied) in [0, 1]."""
+    if crop.size == 0 or crop.shape[0] < 4 or crop.shape[1] < 4:
+        return 0.0
+    resized = cv2.resize(crop, (image_size, image_size), interpolation=cv2.INTER_AREA)
+    batch = np.expand_dims(resized.astype(np.float32) / 255.0, axis=0)
+    probs = model.predict(batch, verbose=0)[0]
+    return float(probs[0]) if probs.shape[0] == 1 else float(probs[1])
+
+
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     image_bytes = await file.read()
@@ -112,9 +122,14 @@ async def detect(file: UploadFile = File(...)):
     slots = get_slots()
     model = get_model()
 
-    # Coordinates were drafted for the uploaded 2048 x 1529 image.
-    scale_x = image_width / 2048.0
-    scale_y = image_height / 1529.0
+    # Derive the reference canvas size from the slot coordinates so the
+    # config works regardless of what resolution the camera was drafted on.
+    all_x = [x for s in slots for x, y in s["points"]]
+    all_y = [y for s in slots for x, y in s["points"]]
+    ref_w = max(all_x)
+    ref_h = max(all_y)
+    scale_x = image_width  / ref_w
+    scale_y = image_height / ref_h
 
     # OpenCV draws in BGR; convert from the RGB upload.
     annotated = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
@@ -206,35 +221,84 @@ async def auto_detect(
 ):
     """
     Upload any parking-lot image; the API will:
-      1. Detect the parking bays using AI + structural analysis.
-      2. Classify every candidate with the parking-lot CNN.
-      3. Return a clean annotated image (base64 JPEG) + occupancy statistics.
+      1. If a fixed slot config exists (parking_slots_demo.json), use those
+         exact bounding boxes and skip YOLO auto-detection entirely.
+      2. Otherwise detect parking bays using AI + structural analysis.
+      3. Classify every candidate with the parking-lot CNN.
+      4. Return a clean annotated image (base64 JPEG) + occupancy statistics.
     """
-    # Import here so the API still starts if ultralytics is not installed yet
-    try:
-        sys.path.insert(0, str(BASE_DIR))
-        from src.detection.auto_detector import detect_and_classify, annotate_image
-    except ImportError as exc:
-        raise HTTPException(
-            status_code=503,
-            detail=f"auto_detector module unavailable: {exc}",
-        )
-
     image_bytes = await file.read()
     image_rgb   = read_rgb_image(image_bytes)
+    image_height, image_width = image_rgb.shape[:2]
 
     model      = get_model()
     image_size = int(model.input_shape[1])   # CNN input size (e.g. 96)
 
-    spaces = detect_and_classify(
-        image_rgb,
-        model,
-        image_size=image_size,
-        cnn_threshold=threshold,
-        target_slots=target_slots,
-    )
+    # ── Fixed-slot path: use parking_slots_demo.json when it exists ──────────
+    if SLOTS_PATH.exists():
+        slots = get_slots()
 
-    annotated_bgr = annotate_image(image_rgb, spaces)
+        # Scale slot coords to actual image size
+        all_x = [x for s in slots for x, y in s["points"]]
+        all_y = [y for s in slots for x, y in s["points"]]
+        ref_w, ref_h = max(all_x), max(all_y)
+        sx = image_width  / ref_w
+        sy = image_height / ref_h
+
+        spaces = []
+        for slot in slots:
+            pts   = [[round(x * sx), round(y * sy)] for x, y in slot["points"]]
+            xs    = [p[0] for p in pts]
+            ys    = [p[1] for p in pts]
+            bx1, by1 = max(0, min(xs)), max(0, min(ys))
+            bx2, by2 = min(image_width, max(xs)), min(image_height, max(ys))
+
+            if bx2 <= bx1 or by2 <= by1:
+                continue
+
+            crop  = image_rgb[by1:by2, bx1:bx2]
+            cnn_p = _cnn_classify(model, crop, image_size)
+            occ   = cnn_p >= threshold
+            spaces.append({
+                "id":                   slot["id"],
+                "slot_id":              slot["id"],
+                "bbox":                 [bx1, by1, bx2, by2],
+                "occupancy":            "OCC" if occ else "FREE",
+                "status":               "occupied" if occ else "vacant",
+                "occupied_probability": round(cnn_p, 4),
+                "confidence":           round(cnn_p, 4),
+                "detection_source":     "fixed_config",
+            })
+
+        # Annotate using the same helper from auto_detector
+        try:
+            sys.path.insert(0, str(BASE_DIR))
+            from src.detection.auto_detector import annotate_image
+        except ImportError as exc:
+            raise HTTPException(status_code=503, detail=f"auto_detector unavailable: {exc}")
+
+        annotated_bgr = annotate_image(image_rgb, spaces)
+
+    else:
+        # ── Fallback: YOLO auto-detection ────────────────────────────────────
+        try:
+            sys.path.insert(0, str(BASE_DIR))
+            from src.detection.auto_detector import detect_and_classify, annotate_image
+        except ImportError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=f"auto_detector module unavailable: {exc}",
+            )
+
+        spaces = detect_and_classify(
+            image_rgb,
+            model,
+            image_size=image_size,
+            cnn_threshold=threshold,
+            target_slots=target_slots,
+        )
+
+        annotated_bgr = annotate_image(image_rgb, spaces)
 
     success, encoded = cv2.imencode(".jpg", annotated_bgr, [cv2.IMWRITE_JPEG_QUALITY, 92])
     if not success:

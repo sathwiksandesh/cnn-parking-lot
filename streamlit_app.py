@@ -63,12 +63,16 @@ try:
 except Exception:
     _secret_url = ""
 
+_env_url = os.getenv("API_URL", "")
+_default_url = _secret_url or _env_url or ""
+
 with st.sidebar:
     st.header("⚙️ Settings")
     api_url = st.text_input(
-        "FastAPI URL",
-        value=_secret_url or os.getenv("API_URL", "http://127.0.0.1:8000"),
-        help="Base URL of the running FastAPI backend.",
+        "FastAPI Backend URL",
+        value=_default_url,
+        placeholder="https://your-api.onrender.com",
+        help="Public URL of your deployed FastAPI backend. See README for deployment instructions.",
     ).strip().rstrip("/")
 
     st.markdown("---")
@@ -101,6 +105,17 @@ with st.sidebar:
         target_slots = 0
 
     st.markdown("---")
+    if not api_url:
+        st.warning(
+            "⚠️ **No API URL configured.**\n\n"
+            "Deploy the FastAPI backend and paste its public URL above.\n\n"
+            "See the **README** for step-by-step Render deployment instructions.",
+            icon="🚨",
+        )
+    else:
+        st.success(f"✅ API: `{api_url}`", icon="🔗")
+
+    st.markdown("---")
     st.caption(
         "**How it works**\n\n"
         "1. AI identifies the active parking row and space boundaries.\n"
@@ -115,6 +130,21 @@ st.write(
     "parking spaces, classify each one as **free** or **occupied**, and "
     "display the annotated result — no manual drawing required."
 )
+
+# ── API URL guard ──────────────────────────────────────────────────────────────
+if not api_url:
+    st.error(
+        "### 🔌 FastAPI Backend Not Configured\n\n"
+        "This app needs a **separately deployed FastAPI backend** to run the CNN model.\n\n"
+        "**To fix this:**\n"
+        "1. Deploy the FastAPI backend to [Render.com](https://render.com) (free tier) — "
+        "a `render.yaml` is already included in the repo.\n"
+        "2. Copy the public URL (e.g. `https://cnn-parking-api.onrender.com`).\n"
+        "3. Paste it in **Streamlit Cloud → App Settings → Secrets** as:\n"
+        "   ```toml\n   API_URL = \"https://cnn-parking-api.onrender.com\"\n   ```\n"
+        "4. Or enter it directly in the sidebar **FastAPI Backend URL** field."
+    )
+    st.stop()
 
 # ── Image upload ──────────────────────────────────────────────────────────────
 uploaded = st.file_uploader(
