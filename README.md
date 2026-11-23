@@ -1,13 +1,4 @@
-# 🚗 Smart Parking Lot Occupancy Detection using Lightweight CNN
-
-[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.15+-FF6F00?logo=tensorflow&logoColor=white)](https://tensorflow.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.31+-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![OpenCV](https://img.shields.io/badge/OpenCV-4.8+-5C3EE8?logo=opencv&logoColor=white)](https://opencv.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Accuracy](https://img.shields.io/badge/Accuracy-96.0%25-brightgreen.svg)]()
-[![Inference Latency](https://img.shields.io/badge/Latency-8.2ms%2Fslot-blue.svg)]()
+#  Smart Parking Lot Occupancy Detection using Lightweight CNN
 
 > **An automated, end-to-end, privacy-preserving, and license-free parking slot occupancy detector using a lightweight Convolutional Neural Network (CNN). Deployed with an asynchronous FastAPI inference service and an interactive Streamlit driver guidance dashboard.**
 
